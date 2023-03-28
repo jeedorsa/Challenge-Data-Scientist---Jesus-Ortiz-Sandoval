@@ -472,7 +472,18 @@ def encode_categorical_columns(data, categorical_columns):
     :return: Encoded data.
     :rtype: DataFrame
     """
-    data = pd.get_dummies(data, columns=categorical_columns)
+    encoder = OneHotEncoder(sparse=False, handle_unknown='ignore')
+    categorical_data = data[categorical_columns]
+    encoded_categorical_data = encoder.fit_transform(categorical_data)
+    
+    encoded_columns = []
+    for cat_col, categories in zip(categorical_columns, encoder.categories_):
+        encoded_columns.extend([f"{cat_col}_{category}" for category in categories])
+    
+    encoded_df = pd.DataFrame(encoded_categorical_data, columns=encoded_columns, index=data.index)
+    data = data.drop(categorical_columns, axis=1)
+    data = pd.concat([data, encoded_df], axis=1)
+    
     return data
 
 def train_and_evaluate(clf, X_train, y_train, X_test, y_test):
